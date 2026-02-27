@@ -1,6 +1,7 @@
 import {
   BlockSubpathResult,
   CachedMetadata,
+  FootnoteSubpathResult,
   HeadingSubpathResult,
   resolveSubpath as baseResolve,
 } from "obsidian";
@@ -18,7 +19,7 @@ export function resolveSubpath(
   doc: string,
   fileCache: CachedMetadata,
   subpath: string
-): BlockSubpathResult | HeadingSubpathResult | ListItemSubpathResult {
+): BlockSubpathResult | FootnoteSubpathResult | HeadingSubpathResult | ListItemSubpathResult {
   const listIndex = subpath.indexOf("#-");
   if (listIndex >= 0) {
     let listItems = fileCache.listItems || [];
