@@ -160,3 +160,35 @@ describe(normalizeMarkdown, () => {
     ]);
   });
 });
+
+describe("multi-range normalization (per-fragment)", () => {
+  it("strips bullet prefix from each fragment when joining without newline", () => {
+    const text =
+      "- Alias matching the original link, plus additional aliases for other abbreviated forms\n- Content construction based on the second part of the URI";
+    const range1 = new WholeString("Alias matching");
+    const range2 = new WholeString("Content construction");
+    const join = " ... ";
+
+    const fragments = [range1, range2].map((r) =>
+      normalizeMarkdown(extractRangeWithContext(text, r))
+    );
+    const result = fragments.join(join);
+
+    expect(result).toBe("Alias matching ... Content construction");
+  });
+
+  it("preserves bullet prefix from each fragment when joining with newline", () => {
+    const text =
+      "- Alias matching the original link, plus additional aliases for other abbreviated forms\n- Content construction based on the second part of the URI";
+    const range1 = new WholeString("Alias matching");
+    const range2 = new WholeString("Content construction");
+    const join = "\n";
+
+    const raw = [range1, range2]
+      .map((r) => extractRangeWithContext(text, r))
+      .join(join);
+    const result = normalizeMarkdown(raw);
+
+    expect(result).toBe("- Alias matching\n- Content construction");
+  });
+});
