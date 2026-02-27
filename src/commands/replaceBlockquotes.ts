@@ -24,10 +24,10 @@ export async function replaceBlockquotes(
         replaced += 1;
         return (
           "\n" +
-          buildEmbed(settings, sourceFile, sourceDoc, {
+          buildEmbed(settings, sourceFile, sourceDoc, [{
             from: indexPos(sourceDoc, sourceMatch.index),
             to: indexPos(sourceDoc, sourceMatch.index + sourceMatch[0].length),
-          })
+          }])
         );
       }
       return match;

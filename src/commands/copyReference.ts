@@ -11,7 +11,7 @@ import { getSelectedRange, isTextSelected } from "./selection";
 
 export function checkCopyReference(
   settings: CopySettings,
-  checking: boolean
+  checking: boolean,
 ): boolean {
   const view = app.workspace.getActiveViewOfType(MarkdownView);
 
@@ -22,8 +22,8 @@ export function checkCopyReference(
           settings,
           view.file,
           view.editor.getValue(),
-          getViewRange(view, view.editor)
-        )
+          getViewRanges(view, view.editor),
+        ),
       );
       new Notice("Reference copied!", 1500);
     } catch (e) {
@@ -37,19 +37,19 @@ export function checkCopyReference(
   );
 }
 
-function getViewRange(view: MarkdownView, editor: Editor) {
+function getViewRanges(view: MarkdownView, editor: Editor): EditorRange[] {
   if (view.getMode() === "source") {
-    return getSourceRange(editor);
+    return getSourceRanges(editor);
   } else {
-    return getPreviewRange(editor);
+    return [getPreviewRange(editor)];
   }
 }
 
-function getSourceRange(editor: Editor): EditorRange {
+function getSourceRanges(editor: Editor): EditorRange[] {
   if (!editor.somethingSelected()) {
     throw new Error("Nothing is selected");
   }
-  return selectionToRange(editor.listSelections()[0]);
+  return editor.listSelections().map(selectionToRange);
 }
 
 function getPreviewRange(editor: Editor): EditorRange {
@@ -60,7 +60,7 @@ function getPreviewRange(editor: Editor): EditorRange {
   const match = editor.getValue().match(selectedRegex);
   if (!match) {
     throw new Error(
-      "Unable to locate markdown from preview, try copying from source mode."
+      "Unable to locate markdown from preview, try copying from source mode.",
     );
   }
   return {

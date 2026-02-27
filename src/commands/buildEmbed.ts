@@ -27,31 +27,46 @@ export function buildEmbed(
   settings: CopySettings,
   file: TFile,
   text: string,
-  editorRange: EditorRange
+  editorRanges: EditorRange[]
 ): string {
-  const selectedText = text.slice(
-    posIndex(text, editorRange.from),
-    posIndex(text, editorRange.to)
-  );
-
   const fileCache = app.metadataCache.getFileCache(file);
-  const subpath = scopeSubpath(fileCache, editorRange, stripHeading);
+  const spanRange: EditorRange = {
+    from: editorRanges[0].from,
+    to: editorRanges[editorRanges.length - 1].to,
+  };
+  const subpath = scopeSubpath(fileCache, spanRange, stripHeading);
+
+  let scopedText = text;
+  let lineOffset = 0;
   if (subpath.length > 0) {
     const subpathResult = resolveSubpath(fileCache, subpath);
     if (!subpathResult) {
       console.log("Could not copy reference, please file a bug report");
+    } else {
+      scopedText = text.slice(
+        subpathResult.start.offset,
+        subpathResult.end?.offset
+      );
+      lineOffset = subpathResult.start.line;
     }
-    text = text.slice(subpathResult.start.offset, subpathResult.end?.offset);
-    editorRange.from.line -= subpathResult.start.line;
-    editorRange.to.line -= subpathResult.start.line;
   }
 
-  const range = getBestRange(text, selectedText, editorRange);
+  const ranges: Range[] = editorRanges.map((editorRange) => {
+    const selectedText = text.slice(
+      posIndex(text, editorRange.from),
+      posIndex(text, editorRange.to)
+    );
+    const adjustedRange: EditorRange = {
+      from: { line: editorRange.from.line - lineOffset, ch: editorRange.from.ch },
+      to: { line: editorRange.to.line - lineOffset, ch: editorRange.to.ch },
+    };
+    return getBestRange(scopedText, selectedText, adjustedRange);
+  });
 
   const embed: Embed = {
     file: app.metadataCache.fileToLinktext(file, "/", true),
     subpath: subpath,
-    ranges: [],
+    ranges: ranges.filter((r) => r !== null),
     join: DEFAULT_JOIN,
     show: {
       author: false,
@@ -60,9 +75,6 @@ export function buildEmbed(
     },
     display: settings.defaultDisplay || DEFAULT_DISPLAY,
   };
-  if (range) {
-    embed.ranges.push(range);
-  }
   return serialize(embed);
 }
 
