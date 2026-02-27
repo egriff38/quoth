@@ -57,9 +57,17 @@ async function assembleQuote(
   let quote: string;
   if (embed.ranges.length > 0) {
     if (file.extension.toLowerCase() == "md") {
-      quote = embed.ranges
-        .map((r) => extractRangeWithContext(text, r))
-        .join(embed.join);
+      if (embed.join.includes("\n")) {
+        quote = normalizeMarkdown(
+          embed.ranges
+            .map((r) => extractRangeWithContext(text, r))
+            .join(embed.join)
+        );
+      } else {
+        quote = embed.ranges
+          .map((r) => normalizeMarkdown(extractRangeWithContext(text, r)))
+          .join(embed.join);
+      }
     } else {
       quote = embed.ranges
         .map((r) => {
@@ -70,11 +78,12 @@ async function assembleQuote(
     }
   } else {
     quote = text;
+    if (file.extension.toLowerCase() == "md") {
+      quote = normalizeMarkdown(quote);
+    }
   }
 
-  if (file.extension.toLowerCase() == "md") {
-    quote = normalizeMarkdown(quote);
-  } else {
+  if (file.extension.toLowerCase() !== "md") {
     const language = languageMap[file.extension.toLowerCase()] || "";
     quote = "```" + language + "\n" + quote.replace(/^\n+|\n+$/, "") + "\n```";
   }
